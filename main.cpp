@@ -9,6 +9,12 @@ struct Buffer
 	uint32_t* data;
 };
 
+struct Sprite
+{
+	size_t width, height;
+	uint8_t* data;
+};
+
 const char* vertex_shader =
 	"\n"
 	"#version 330\n"
@@ -51,6 +57,24 @@ void buffer_clear(Buffer* buffer, uint32_t color)
 	for(size_t i = 0; i < buffer->width * buffer->height; ++i)
 	{
 		buffer->data[i] = color;
+	}
+}
+
+void buffer_sprite_draw(Buffer* buffer, const Sprite& sprite,
+	size_t x, size_t y, uint32_t color)
+{
+	for(size_t xi = 0; xi < sprite.width; ++xi)
+	{
+		for(size_t yi = 0; yi < sprite.height; ++yi)
+		{
+			size_t sy = sprite.height - 1 + y - yi;
+			size_t sx = x + xi;
+			if(sprite.data[yi * sprite.width + xi] &&
+				sy < buffer->height && sx < buffer->width)
+			{
+				buffer->data[sy * buffer->width + sx] = color;
+			}
+		}
 	}
 }
 
@@ -196,10 +220,33 @@ int main(int argc, char *argv[])
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(fullscreen_triangle_vao);
 
+    Sprite alien_sprite;
+    alien_sprite.width = 11;
+    alien_sprite.height = 8;
+    alien_sprite.data = new uint8_t[88]
+    {
+        0,0,1,0,0,0,0,0,1,0,0, // ..@.....@..
+        0,0,0,1,0,0,0,1,0,0,0, // ...@...@...
+        0,0,1,1,1,1,1,1,1,0,0, // ..@@@@@@@..
+        0,1,1,0,1,1,1,0,1,1,0, // .@@.@@@.@@.
+        1,1,1,1,1,1,1,1,1,1,1, // @@@@@@@@@@@
+        1,0,1,1,1,1,1,1,1,0,1, // @.@@@@@@@.@
+        1,0,1,0,0,0,0,0,1,0,1, // @.@.....@.@
+        0,0,0,1,1,0,1,1,0,0,0  // ...@@.@@...
+    };
+
 	glClearColor(1.0, 0.0, 0.0, 1.0);
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		buffer_sprite_draw(&buffer, alien_sprite,
+			112, 128, rgb_to_uint32(128, 0, 0));
+
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+			buffer.width, buffer.height,
+			GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
+			buffer.data);
 
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
