@@ -15,6 +15,26 @@ struct Sprite
 	uint8_t* data;
 };
 
+struct Alien
+{
+	size_t x, y;
+	uint8_t type;
+};
+
+struct Player
+{
+	size_t x, y;
+	uint8_t life;
+};
+
+struct Game
+{
+	size_t width, height;
+	size_t num_aliens;
+	Alien* aliens;
+	Player player;
+};
+
 const char* vertex_shader =
 	"\n"
 	"#version 330\n"
@@ -235,6 +255,40 @@ int main(int argc, char *argv[])
         0,0,0,1,1,0,1,1,0,0,0  // ...@@.@@...
     };
 
+	Sprite player_sprite;
+	player_sprite.width = 11;
+	player_sprite.height = 7;
+	player_sprite.data = new uint8_t[77]
+	{
+		0,0,0,0,0,1,0,0,0,0,0, // .....@.....
+		0,0,0,0,1,1,1,0,0,0,0, // ....@@@....
+		0,0,0,0,1,1,1,0,0,0,0, // ....@@@....
+		0,1,1,1,1,1,1,1,1,1,0, // .@@@@@@@@@.
+		1,1,1,1,1,1,1,1,1,1,1, // @@@@@@@@@@@
+		1,1,1,1,1,1,1,1,1,1,1, // @@@@@@@@@@@
+		1,1,1,1,1,1,1,1,1,1,1, // @@@@@@@@@@@
+	};
+
+	Game game;
+	game.width = buffer_width;
+	game.height = buffer_height;
+	game.num_aliens = 55;
+	game.aliens = new Alien[game.num_aliens];
+
+	game.player.x = 112 - 5;
+	game.player.y = 32;
+
+	game.player.life = 3;
+
+	for(size_t yi = 0; yi < 5; ++yi)
+	{
+		for(size_t xi = 0; xi < 11; ++xi)
+		{
+			game.aliens[yi * 11 + xi].x = 16 * xi + 20;
+			game.aliens[yi * 11 + xi].y = 17 * yi + 128;
+		}
+	}
+
 	glClearColor(1.0, 0.0, 0.0, 1.0);
 	while (!glfwWindowShouldClose(window))
 	{
@@ -242,6 +296,16 @@ int main(int argc, char *argv[])
 
 		buffer_sprite_draw(&buffer, alien_sprite,
 			112, 128, rgb_to_uint32(128, 0, 0));
+
+		for(size_t ai = 0; ai < game.num_aliens; ++ai)
+		{
+			const Alien& alien = game.aliens[ai];
+			buffer_sprite_draw(&buffer, alien_sprite,
+				alien.x, alien.y, rgb_to_uint32(128, 0, 0));
+		}
+
+		buffer_sprite_draw(&buffer, player_sprite,
+			game.player.x, game.player.y, rgb_to_uint32(128, 0, 0));
 
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
 			buffer.width, buffer.height,
