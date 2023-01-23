@@ -27,12 +27,22 @@ struct Player
 	uint8_t life;
 };
 
+struct Bullet
+{
+	size_t x, y;
+	int dir;
+};
+
+#define GAME_MAX_BULLETS 128
+
 struct Game
 {
 	size_t width, height;
 	size_t num_aliens;
+	size_t num_bullets;
 	Alien* aliens;
 	Player player;
+	Bullet bullets[GAME_MAX_BULLETS];
 };
 
 struct SpriteAnimation
@@ -73,6 +83,7 @@ const char* fragment_shader =
 
 bool game_running = false;
 int move_dir = 0;
+bool fire_pressed = 0;
 
 void error_callback(int error, const char* description)
 {
@@ -172,6 +183,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			move_dir += 1;
 		}
 		break;
+	case GLFW_KEY_SPACE:
+		if(action == GLFW_RELEASE)
+		{
+			fire_pressed = true;
+		}
 	default:
 		break;
 	}
@@ -331,6 +347,16 @@ int main(int argc, char *argv[])
 		1,1,1,1,1,1,1,1,1,1,1, // @@@@@@@@@@@
 	};
 
+	Sprite bullet_sprite;
+	bullet_sprite.width = 1;
+	bullet_sprite.height = 3;
+	bullet_sprite.data = new uint8_t[3]
+	{
+		1, // @
+		1, // @
+		1  // @
+	};
+
 	SpriteAnimation* alien_animation = new SpriteAnimation;
 
 	alien_animation->loop = true;
@@ -346,6 +372,7 @@ int main(int argc, char *argv[])
 	game.width = buffer_width;
 	game.height = buffer_height;
 	game.num_aliens = 55;
+	game.num_bullets = 0;
 	game.aliens = new Alien[game.num_aliens];
 
 	game.player.x = 112 - 5;
@@ -389,6 +416,13 @@ int main(int argc, char *argv[])
 		buffer_sprite_draw(&buffer, player_sprite,
 			game.player.x, game.player.y, rgb_to_uint32(128, 0, 0));
 
+		for(size_t bi = 0; bi < game.num_bullets; ++bi)
+		{
+			const Bullet& bullet = game.bullets[bi];
+			const Sprite& sprite = bullet_sprite;
+			buffer_sprite_draw(&buffer, sprite, bullet.x, bullet.y, rgb_to_uint32(128, 0, 0));
+		}
+
 		if(game.player.x + player_sprite.width + player_move_dir >= game.width - 1)
 		{
 			game.player.x = game.width - player_sprite.width - player_move_dir - 1;
@@ -427,6 +461,20 @@ int main(int argc, char *argv[])
 
 		glfwSwapBuffers(window);
 
+		for(size_t bi = 0; bi < game.num_bullets;)
+		{
+			game.bullets[bi].y += game.bullets[bi].dir;
+			if(game.bullets[bi].y >= game.height ||
+				game.bullets[bi].y < bullet_sprite.height)
+			{
+				game.bullets[bi] = game.bullets[game.num_bullets - 1];
+				--game.num_bullets;
+				continue;
+			}
+
+			++bi;
+		}
+
 		if(game.player.x + player_sprite.width + player_move_dir >= game.width - 1)
 		{
 			game.player.x = game.width - player_sprite.width - player_move_dir - 1;
@@ -459,6 +507,15 @@ int main(int argc, char *argv[])
 				game.player.x += player_move_dir;
 			}
 		}
+
+		if(fire_pressed && game.num_bullets < GAME_MAX_BULLETS)
+		{
+			game.bullets[game.num_bullets].x = game.player.x + player_sprite.width / 2;
+			game.bullets[game.num_bullets].y = game.player.y + player_sprite.height;
+			game.bullets[game.num_bullets].dir = 2;
+			++game.num_bullets;
+		}
+		fire_pressed = false;
 
 		glfwPollEvents();
 	}
