@@ -191,8 +191,8 @@ int main(int argc, char *argv[])
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-	const size_t buffer_width = 640;
-	const size_t buffer_height = 480;
+	const size_t buffer_width = 224;
+	const size_t buffer_height = 256;
 
 	GLFWwindow *window = glfwCreateWindow(buffer_width, buffer_height,
 		"Space Invaders", nullptr, nullptr);
