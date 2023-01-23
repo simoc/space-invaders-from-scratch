@@ -71,6 +71,9 @@ const char* fragment_shader =
 	"    outColor = texture(buffer, TexCoord).rgb;\n"
 	"}\n";
 
+bool game_running = false;
+int move_dir = 0;
+
 void error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
@@ -137,6 +140,41 @@ bool validate_program(GLuint program)
 	}
 
 	return true;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	switch(key)
+	{
+	case GLFW_KEY_ESCAPE:
+		if(action == GLFW_PRESS)
+		{
+			game_running = false;
+		}
+		break;
+	case GLFW_KEY_RIGHT:
+		if(action == GLFW_PRESS)
+		{
+			move_dir += 1;
+		}
+		else if(action == GLFW_RELEASE)
+		{
+			move_dir -= 1;
+		}
+		break;
+	case GLFW_KEY_LEFT:
+		if(action == GLFW_PRESS)
+		{
+			move_dir -= 1;
+		}
+		else if(action == GLFW_RELEASE)
+		{
+			move_dir += 1;
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -324,12 +362,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	glfwSetKeyCallback(window, key_callback);
+
 	glfwSwapInterval(1);
 
 	int player_move_dir = 1;
 
+	game_running = true;
+
 	glClearColor(1.0, 0.0, 0.0, 1.0);
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(window) && game_running)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -398,6 +440,24 @@ int main(int argc, char *argv[])
 		else
 		{
 			game.player.x += player_move_dir;
+		}
+
+		player_move_dir = 2 * move_dir;
+
+		if(player_move_dir != 0)
+		{
+			if(game.player.x + player_sprite.width + player_move_dir >= game.width)
+			{
+				game.player.x = game.width - player_sprite.width;
+			}
+			else if((int)game.player.x + player_move_dir <= 0)
+			{
+				game.player.x = 0;
+			}
+			else
+			{
+				game.player.x += player_move_dir;
+			}
 		}
 
 		glfwPollEvents();
