@@ -1,5 +1,7 @@
 #include <cstdio>
 #include <cstdint>
+#include <chrono>
+#include <thread>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -812,6 +814,11 @@ int main(int argc, char *argv[])
 			++game.num_bullets;
 		}
 		fire_pressed = false;
+
+		/*
+		 * Delay to make the game playable on a PC.
+		 */
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
 		glfwPollEvents();
 	}
