@@ -4,3 +4,6 @@ OpenGL Space Invaders game from Nick Tasios
 
 Whilst doing the tutorial I discovered that it does not contain all of the source code and I had to refer to the
 [author's git repository](https://github.com/Grieverheart/space_invaders) to find the missing parts.
+
+After completing the tutorial, I also found that it is not a complete Space Invaders game --
+the aliens neither move or shoot.
